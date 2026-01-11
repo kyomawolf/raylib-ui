@@ -98,9 +98,10 @@ void rlu_handle_frame_input(rlu_context* context) {
     if (!mouse_pressed && pressedKey == KEY_NULL) {
         return;
     }
-
+    printf("mouse button pressed at: %f %f\n", mouse_position.x, mouse_position.y);
     for (int i = 0; i < context->scene_count; i++) {
         if (context->scenes[i].enabled) {
+            printf("ui scene click size: x%f y%f w%f h%f\n", context->scenes[i].ui_click_size.x, context->scenes[i].ui_click_size.y, context->scenes[i].ui_click_size.width, context->scenes[i].ui_click_size.height);
             if (CheckCollisionPointRec(mouse_position, context->scenes[i].ui_click_size)) {
                 // todo hit and trigger child elements.
                 if (rlu_trigger_ui_element_click(&context->scenes[i].root_element, mouse_position)) {
@@ -182,6 +183,8 @@ rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_
     new_element->callback = callback;
     new_element->click_size.x = position.x;
     new_element->click_size.y = position.y;
+    new_element->click_size.width = ui_texture.width;
+    new_element->click_size.height = ui_texture.height;
     new_element->texture_position.x = position.x;
     new_element->texture_position.y = position.y;
     new_element->enabled = true;

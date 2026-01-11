@@ -23,13 +23,11 @@ int main() {
 
     rlu_element* test_button = rlu_add_button_full(ui_context, 0, main_scene, position, button_texture, callback_test);
     test_button->hide = false;
-    printf("scene count: %i \n", ui_context->scene_count);
-    // todo fix scene rendering
 
     // todo make example with clickarea, texture etc.
 
     while (!WindowShouldClose()) {
-        // rlu_handle_frame_input(ui_context);
+        rlu_handle_frame_input(ui_context);
         BeginDrawing();
         ClearBackground(GRAY);
         rlu_render(ui_context);
