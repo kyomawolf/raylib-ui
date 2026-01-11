@@ -8,6 +8,7 @@ INC = -Iinclude -I. -Itests
 
 SRC=raylib-ui.c private-helper.c
 TEST_SRC = test_find_element.c test_helper.c testmain.c
+EXAMPLE_SRC = example.c
 
 VPATH=tests
 
@@ -15,28 +16,24 @@ OBJ_DIR = obj/
 
 OBJ = $(addprefix $(OBJ_DIR), $(patsubst %.c,%.o,$(SRC)))
 TEST_OBJ = $(addprefix $(OBJ_DIR), $(patsubst %.c,%.o,$(TEST_SRC)))
+EXAMPLE_OBJ = $(addprefix $(OBJ_DIR), $(patsubst %.c,%.o,$(EXAMPLE_SRC)))
 
 
-all: $(NAME)
+all: libs example test
 
-$(NAME): $(OBJ)
-	gcc $(FLAGS) -g $(INC) $(filter %.o,$^) -o $@ $(LIBS)
-
-shared: $(OBJ)
+libs: $(OBJ)
 	gcc $(FLAGS) -shared -g $(INC) $(filter %.o,$^) -o $(NAME).so $(LIBS)
-
-static: $(OBJ)
 	ar cr lib$(NAME).a $(filter %.o,$^)
 
 $(OBJ_DIR)%.o: %.c
 	gcc $(FLAGS) $(INC) -g -c $< -o $@
 
-example: static
-	gcc $(FLAGS) $(INC) -g example.c -o $@ $(LIBS) -L. -lraylib-ui
+example: libs $(EXAMPLE_OBJ)
+	gcc $(FLAGS) $(INC) -g $(EXAMPLE_OBJ) -o $@ $(LIBS) -L. -lraylib-ui
 
 re: clean all
 
-test: static $(TEST_OBJ) $(OBJ)
+test: libs $(TEST_OBJ) $(OBJ)
 	gcc $(FLAGS) -g $(INC) $(TEST_OBJ) $(OBJ) -o testrunner $(LIBS)
 
 
@@ -44,6 +41,7 @@ clean:
 	- rm -f $(OBJ)
 	- rm -f lib$(NAME).a
 	- rm -f $(NAME).so
+	- rm -f example
 	@echo "object directory cleaned!"
 
 fclean:
