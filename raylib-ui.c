@@ -29,29 +29,45 @@ int rlu_add_scene(rlu_context* context) {
     return new_id;
 }
 
-int rlu_add_button(rlu_context* context, int scene_id, int parent_id) {
-    rlu_element* new_button = NULL;
-    int ret = 0;
+// todo rename
+rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene_id, Vector2 position, Texture2D ui_texture, enum rlu_ui_type type) {
+    rlu_element* new_element = NULL;
+    int element_id = 0;
     for (int it = 0; context->scene_count > it && context->scenes != NULL; it++) {
         if (context->scenes[it].id == scene_id) {
             if (parent_id == 0) {
-                new_button = ru_add_ui_element_children(&context->scenes[it].root_element);
-                if (new_button)
-                    ret = new_button->id;
+                new_element = ru_add_ui_element_children(&context->scenes[it].root_element);
+                if (new_element)
+                    element_id = new_element->id;
                 break;
             } else {
                 rlu_element* parent = ru_search_for_element(&context->scenes[it].root_element, parent_id);
                 if (!parent) {
                     return 0;
                 }
-                new_button = ru_add_ui_element_children(parent);
-                if (new_button)
-                    ret = new_button->id;
-                break;  
+                new_element = ru_add_ui_element_children(parent);
+                if (new_element)
+                    element_id = new_element->id;
+                break;
             }
         }
     }
-    return ret;
+    
+    if (!element_id || !new_element) {
+        return 0;
+    }
+    
+    new_element->type = type;
+    new_element->ui_texture = ui_texture;
+    new_element->click_size.x = position.x;
+    new_element->click_size.y = position.y;
+    new_element->click_size.width = (float)ui_texture.width;
+    new_element->click_size.height = (float)ui_texture.height;
+    new_element->texture_position.x = position.x;
+    new_element->texture_position.y = position.y;
+    new_element->enabled = true;
+    new_element->layer = 0;
+    return new_element;
 }
 
 bool rlu_ui_add_callback(rlu_context* context, int scene_id, int target_id, bool(*callback)(void*)) {
@@ -103,7 +119,6 @@ void rlu_handle_frame_input(rlu_context* context) {
         if (context->scenes[i].enabled) {
             printf("ui scene click size: x%f y%f w%f h%f\n", context->scenes[i].ui_click_size.x, context->scenes[i].ui_click_size.y, context->scenes[i].ui_click_size.width, context->scenes[i].ui_click_size.height);
             if (CheckCollisionPointRec(mouse_position, context->scenes[i].ui_click_size)) {
-                // todo hit and trigger child elements.
                 if (rlu_trigger_ui_element_click(&context->scenes[i].root_element, mouse_position)) {
                     break;
                 }
@@ -116,7 +131,7 @@ void rlu_handle_frame_input(rlu_context* context) {
 
 void rlu_draw_element(rlu_element* element) {
     //printf("[drawing texture] drawing texture with id: %i\n", element->id);
-    DrawTexture(element->ui_texture, element->texture_position.x, element->texture_position.y, WHITE);
+    DrawTexture(element->ui_texture, (int)element->texture_position.x, (int)element->texture_position.y, WHITE);
 }
 
 void rlu_render_scene(rlu_scene* scene) {
@@ -168,31 +183,28 @@ void rlu_render(rlu_context* context) {
 
 rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_id, 
                          Vector2 position, Texture2D ui_texture, bool (*callback)(void*)) {
-    int new_button_id = rlu_add_button(context, scene_id, parent_id);
-    if (!new_button_id) {
-        return 0;
-    }
-    rlu_scene* target_scene = ru_search_for_scene(context, scene_id);
-    rlu_element* new_element = ru_search_for_element(&target_scene->root_element, new_button_id);
+    rlu_element* new_element = rlu_add_element_base(context, parent_id, scene_id, position, ui_texture, BUTTON);
     if (!new_element) {
         return 0;
     }
-    
 
-    new_element->ui_texture = ui_texture;
     new_element->callback = callback;
-    new_element->click_size.x = position.x;
-    new_element->click_size.y = position.y;
-    new_element->click_size.width = ui_texture.width;
-    new_element->click_size.height = ui_texture.height;
-    new_element->texture_position.x = position.x;
-    new_element->texture_position.y = position.y;
-    new_element->enabled = true;
-    new_element->layer = 0;
-    rlu_rebuild_click_size(context, scene_id);
+
     return new_element;
+}
+
+rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_id, 
+                                Vector2 position, Texture2D ui_texture) {
+    rlu_element* new_element = rlu_add_element_base(context, parent_id, scene_id, position, ui_texture, TEXTFIELD);
+
+     if (!new_element) {
+        return 0;
+    }
+
+    
 }
 
 // todo create text field
 // todo create container
+// todo create layering for faster rendering speed - and with it a static ui state
 // todo create tests

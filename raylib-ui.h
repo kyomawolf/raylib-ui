@@ -64,10 +64,6 @@ rlu_context* rlu_create_new_context();
 
 int rlu_add_scene(rlu_context* context);
 
-/**
- * @return 0 if no button could be added
- */
-int rlu_add_button(rlu_context* context, int scene_id, int parent_id);
 
 /**
  * @return false if a callback has already been configured, true if it has been successfully set
@@ -84,6 +80,11 @@ void rlu_handle_frame_input(rlu_context* context);
  */
 void rlu_render(rlu_context* context);
 
+/**
+ * @return 0 if no button could be added
+ */
+rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene_id, 
+                         Vector2 position, Texture2D ui_texture, enum rlu_ui_type type);
 
 /**
  * @param context the programs global raylib-ui context
@@ -99,4 +100,7 @@ void rlu_render(rlu_context* context);
 rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_id, 
                          Vector2 position, Texture2D ui_texture, bool (*callback)(void*));
 
+
+rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_id, 
+                                Vector2 position, Texture2D ui_texture);
 #endif /*RAYLIB_UI_H*/
