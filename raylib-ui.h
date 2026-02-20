@@ -4,6 +4,7 @@
 #include "raylib.h"
 
 enum rlu_ui_type {NONE, ROOT, BUTTON, TEXTFIELD};
+enum rlu_hotkey_mods {RLU_HK_NONE = 0, RLU_HK_CTRL = 1, RLU_HK_SHIFT = 2, RLU_HK_ALT = 4};
 
 typedef struct base_element {
     struct base_element* parent;
@@ -28,11 +29,16 @@ typedef struct base_element {
 } rlu_element;
 
 typedef struct ui_hotkey {
+    //? 1 Ctrl | 2 Shift | 4 Alt
+    int modifier;
     int* keys;
+    int key_count;
     int id;
     
     rlu_element* related_ui_element;
+    bool (*callback)(void*);
     bool enabled;
+    void* user_data;
 } rlu_hotkey;
 
 typedef struct ui_scene {
@@ -52,6 +58,10 @@ typedef struct ui_state {
     int scene_count;
     int scene_reserve;
 
+    rlu_hotkey* hotkey_list;
+    int hotkey_count;
+
+    rlu_element* current_focus;
 } rlu_context;
 
 
@@ -102,5 +112,8 @@ rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_
 
 
 rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_id, 
-                                Vector2 position, Texture2D ui_texture);
+                                Vector2 position, Texture2D ui_texture, const char* text);
+
+
+
 #endif /*RAYLIB_UI_H*/

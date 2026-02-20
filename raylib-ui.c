@@ -3,6 +3,8 @@
 #include <string.h>
 #include "private-helper.h"
 
+// noone will press more than 10 keys at once...
+const int MAX_PRESSED_KEYS_AT_ONCE = 10;
 
 rlu_context* rlu_create_new_context() {
     rlu_context* new_context = calloc(1, sizeof(rlu_context));
@@ -84,12 +86,14 @@ bool rlu_ui_add_callback(rlu_context* context, int scene_id, int target_id, bool
     return true;
 }
 
-bool rlu_trigger_ui_element_click(rlu_element* root, Vector2 position) {
+bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vector2 position) {
     rlu_element* current = root;
     if (root == NULL)
         return false;
     if (CheckCollisionPointRec(position, root->click_size)) {
-            return current->callback(current->user_data);
+            context->current_focus = current;
+            if (current->children[i].callback != NULL)
+                return current->callback(current->user_data);
     }
     rlu_element* entrance = current;
     do {
@@ -98,34 +102,103 @@ bool rlu_trigger_ui_element_click(rlu_element* root, Vector2 position) {
                 current = &current->children[i];
                 break;
             } else if (CheckCollisionPointRec(position, current->children[i].click_size)) {
-                return current->children[i].callback(current->children[i].user_data);
+                context->current_focus = &current->children[i];
+                if (current->children[i].callback != NULL)
+                    return current->children[i].callback(current->children[i].user_data);
             }
         }
     } while (current != NULL && entrance != current);
     return false;
 }
 
-void rlu_handle_frame_input(rlu_context* context) {
-    bool mouse_pressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-    int pressedKey = GetKeyPressed();
+void rlu_handle_mouse_input(rlu_context* context) {
     Vector2 mouse_position = GetMousePosition();
-
-    //todo hovermode
-    if (!mouse_pressed && pressedKey == KEY_NULL) {
-        return;
-    }
     printf("mouse button pressed at: %f %f\n", mouse_position.x, mouse_position.y);
     for (int i = 0; i < context->scene_count; i++) {
         if (context->scenes[i].enabled) {
             printf("ui scene click size: x%f y%f w%f h%f\n", context->scenes[i].ui_click_size.x, context->scenes[i].ui_click_size.y, context->scenes[i].ui_click_size.width, context->scenes[i].ui_click_size.height);
             if (CheckCollisionPointRec(mouse_position, context->scenes[i].ui_click_size)) {
-                if (rlu_trigger_ui_element_click(&context->scenes[i].root_element, mouse_position)) {
+                if (rlu_trigger_ui_element_click(context, &context->scenes[i].root_element, mouse_position)) {
                     break;
                 }
             }
             // (context->scenes[i].root_element);
             // check if ui area is in scene
         }
+    }
+}
+
+bool rlu_handle_key_input_is_hotkey(int* pressed_keys, rlu_hotkey* hotkey) {
+    for (int i = 0; i < MAX_PRESSED_KEYS_AT_ONCE && pressed_keys[i] != KEY_NULL; i++) {
+        bool key_entry_exists = false;
+        for (int j = 0; j < hotkey->key_count; j++) {
+            if (hotkey->keys[j] == pressed_keys[i]) {
+                key_entry_exists = true;
+            }
+        }
+        if (!key_entry_exists)
+            return false;
+    }
+    return true;
+}
+
+void rlu_handle_key_input(rlu_context* context, int first_pressed) {
+    int pressed_keys[MAX_PRESSED_KEYS_AT_ONCE];
+    int modifier = RLU_HK_NONE;
+
+    int current_key = first_pressed;
+    int index = 0;
+    int pressed_non_mod_keys = 0;
+    while (current_key != KEY_NULL && index < MAX_PRESSED_KEYS_AT_ONCE) {
+        switch (current_key) {
+            case KEY_LEFT_CONTROL:
+            case KEY_RIGHT_CONTROL:
+                modifier |= RLU_HK_CTRL;
+            break;
+            case KEY_LEFT_SHIFT:
+            case KEY_RIGHT_SHIFT:
+                modifier |= RLU_HK_SHIFT;
+            break;
+            case KEY_LEFT_ALT:
+            case KEY_RIGHT_ALT:
+                modifier |= RLU_HK_ALT;
+            break;
+            default:
+                pressed_non_mod_keys++;
+                pressed_keys[index] = current_key;
+            break;
+        }
+        index++;
+        current_key = GetKeyPressed();
+    }
+    // TODO add special mode for setting hotkeys
+    //check for hotkeys
+    for (int hk_counter = 0; hk_counter < context->hotkey_count; hk_counter++) {
+        rlu_hotkey hotkey = context->hotkey_list[hk_counter];
+        if (hotkey.modifier != modifier && pressed_non_mod_keys != hotkey.key_count) {
+            continue;
+        }
+        if (rlu_handle_key_is_in_hotkey(pressed_keys, &hotkey)) {
+            hotkey.callback(hotkey.user_data);
+            printf("[DEBUG]: called hotkey with ID %i\n", hotkey.id);
+            return;
+        }
+    }
+
+    //todo check for focus and writable (text) field
+
+}
+
+void rlu_handle_frame_input(rlu_context* context) {
+    bool mouse_pressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    int pressedKey = GetKeyPressed();
+
+    //todo hovermode
+    if (mouse_pressed) {
+        rlu_handle_mouse_input(context);
+    }
+    if (pressedKey == KEY_NULL) {
+        rlu_handle_key_input(context, pressedKey);
     }
 }
 
@@ -194,14 +267,17 @@ rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_
 }
 
 rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_id, 
-                                Vector2 position, Texture2D ui_texture) {
+                                Vector2 position, Texture2D ui_texture, const char *text) {
     rlu_element* new_element = rlu_add_element_base(context, parent_id, scene_id, position, ui_texture, TEXTFIELD);
 
      if (!new_element) {
         return 0;
     }
 
-    
+    new_element->user_data = calloc(strlen(text) + 1, 1);
+    strncpy(new_element->user_data, text, strlen(text));
+
+    return new_element;
 }
 
 // todo create text field
