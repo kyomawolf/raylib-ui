@@ -149,3 +149,38 @@ void rlu_rebuild_click_size(rlu_context* context, int scene_id) {
         }
     }
 }
+
+
+
+void text_field_edit(rlu_element* text_field, int (*all_pressed_keys)[MAX_PRESSED_KEYS_AT_ONCE]) {
+    size_t str_size = strlen(text_field->user_data);
+
+    if (str_size + MAX_PRESSED_KEYS_AT_ONCE <= text_field->text_size) {
+        char* replacement = calloc(str_size + MAX_PRESSED_KEYS_AT_ONCE + 1, 1);
+        memcpy(replacement, text_field->user_data, text_field->text_size);
+        free(text_field->user_data);
+        text_field->user_data = replacement;
+        text_field->text_size = str_size + MAX_PRESSED_KEYS_AT_ONCE + 1;
+    }
+
+    char* text = text_field->user_data;
+
+    for (int i = 0; i < MAX_PRESSED_KEYS_AT_ONCE; i++) {
+        
+        //normal text input; TODO unicode?
+        if ((*all_pressed_keys)[i] >= 32
+            && (*all_pressed_keys)[i] <= 126) {
+                //if cursorposition is equal to str_size chars will be appended
+                if (text_field->cursor_pos == str_size) {
+                    text[text_field->cursor_pos] = (*all_pressed_keys)[i];
+                    text[text_field->cursor_pos + 1] = '\0';
+                    text_field->cursor_pos++;
+                    str_size++;
+                } else {
+                    
+                }
+        }
+
+        // todo specials like CTRL-C CTRL-V CTRL-A
+    }
+}

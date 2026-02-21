@@ -1,6 +1,13 @@
 #ifndef RAYLIB_UI_H
 #define RAYLIB_UI_H
 
+#if RAYLIB_VERSION_MAJOR < 5
+# error "WRONG RAYLIB MAYOR VERSION"
+#elif RAYLIB_VERSION_MINOR < 5
+# error "WRONG RAYLIB MINOR VERSION"
+#endif
+
+
 #include "raylib.h"
 
 enum rlu_ui_type {NONE, ROOT, BUTTON, TEXTFIELD};
@@ -24,8 +31,22 @@ typedef struct base_element {
 
     Texture2D ui_texture;
     Vector2 texture_position;
+
+    //only if obj button
     bool (*callback)(void*);
+
+    //if button: will be give into callback as argument
+    //if text field: contains text to be displayed in text field
     void* user_data;
+
+    // only if obj text field
+    bool writable;
+    size_t cursor_pos;
+    size_t text_size;
+
+    //todo font stuff
+
+    // only if obj container
 } rlu_element;
 
 typedef struct ui_hotkey {
@@ -62,6 +83,7 @@ typedef struct ui_state {
     int hotkey_count;
 
     rlu_element* current_focus;
+    //todo insert mode
 } rlu_context;
 
 

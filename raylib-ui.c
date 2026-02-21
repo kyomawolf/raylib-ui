@@ -3,9 +3,6 @@
 #include <string.h>
 #include "private-helper.h"
 
-// noone will press more than 10 keys at once...
-const int MAX_PRESSED_KEYS_AT_ONCE = 10;
-
 rlu_context* rlu_create_new_context() {
     rlu_context* new_context = calloc(1, sizeof(rlu_context));
     new_context->scenes = calloc(4, sizeof(rlu_scene));
@@ -144,8 +141,8 @@ bool rlu_handle_key_input_is_hotkey(int* pressed_keys, rlu_hotkey* hotkey) {
 
 void rlu_handle_key_input(rlu_context* context, int first_pressed) {
     int pressed_keys[MAX_PRESSED_KEYS_AT_ONCE];
+    int all_pressed_keys[MAX_PRESSED_KEYS_AT_ONCE];
     int modifier = RLU_HK_NONE;
-
     int current_key = first_pressed;
     int index = 0;
     int pressed_non_mod_keys = 0;
@@ -164,13 +161,15 @@ void rlu_handle_key_input(rlu_context* context, int first_pressed) {
                 modifier |= RLU_HK_ALT;
             break;
             default:
-                pressed_non_mod_keys++;
-                pressed_keys[index] = current_key;
+            pressed_non_mod_keys++;
+            pressed_keys[index] = current_key;
             break;
         }
         index++;
+        all_pressed_keys[index] = current_key;
         current_key = GetKeyPressed();
     }
+
     // TODO add special mode for setting hotkeys
     //check for hotkeys
     for (int hk_counter = 0; hk_counter < context->hotkey_count; hk_counter++) {
@@ -178,7 +177,7 @@ void rlu_handle_key_input(rlu_context* context, int first_pressed) {
         if (hotkey.modifier != modifier && pressed_non_mod_keys != hotkey.key_count) {
             continue;
         }
-        if (rlu_handle_key_is_in_hotkey(pressed_keys, &hotkey)) {
+        if (rlu_handle_key_input_is_hotkey(pressed_keys, &hotkey)) {
             hotkey.callback(hotkey.user_data);
             printf("[DEBUG]: called hotkey with ID %i\n", hotkey.id);
             return;
@@ -186,7 +185,11 @@ void rlu_handle_key_input(rlu_context* context, int first_pressed) {
     }
 
     //todo check for focus and writable (text) field
-
+    if (context->current_focus != NULL
+        && context->current_focus->type == TEXTFIELD
+        && context->current_focus->writable) {
+            text_field_edit(context->current_focus, &all_pressed_keys);
+    }
 }
 
 void rlu_handle_frame_input(rlu_context* context) {

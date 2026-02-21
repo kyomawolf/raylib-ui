@@ -1,6 +1,6 @@
 NAME = raylib-ui
 
-LIBS =  -L./lib -lraylib -lm
+LIBS =  -lraylib -lm
 FLAGS = -Wall -Wextra
 SANITIZE = -fsanitize=address -fno-omit-frame-pointer -static-libsan
 
