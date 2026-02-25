@@ -200,12 +200,30 @@ void text_field_edit(rlu_element* text_field, int (*all_pressed_keys)[MAX_PRESSE
                 if (text_field->cursor_pos == str_size) {
                     text[text_field->cursor_pos] = (*all_pressed_keys)[i];
                     text[text_field->cursor_pos + 1] = '\0';
-                    text_field->cursor_pos++;
-                    str_size++;
                 } else {
-                    
+                    memmove(&text[text_field->cursor_pos], &text[text_field->cursor_pos - 1], str_size - text_field->cursor_pos - 1);
+                    text[text_field->cursor_pos] = (*all_pressed_keys)[i];
                 }
+                text_field->cursor_pos++;
+                str_size++;
+        } else if ((*all_pressed_keys)[i] == KEY_RIGHT) {
+            if (text_field->cursor_pos != str_size) {
+                text_field->cursor_pos++;
+            }
+        } else if ((*all_pressed_keys)[i] == KEY_LEFT) {
+            if (text_field->cursor_pos != 0) {
+                text_field->cursor_pos--;
+            }
+        } else if ((*all_pressed_keys)[i] == KEY_UP) { // TODO improve mutline editing
+            text_field->cursor_pos = 0;
+        } else if ((*all_pressed_keys)[i] == KEY_DOWN) {
+            text_field->cursor_pos = str_size;
+        } else if ((*all_pressed_keys)[i] == KEY_PAGE_UP) {
+            text_field->cursor_pos = 0;
+        } else if ((*all_pressed_keys)[i] == KEY_PAGE_DOWN) {
+            text_field->cursor_pos = str_size;
         }
+
 
         // todo specials like CTRL-C CTRL-V CTRL-A
     }
