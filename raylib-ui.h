@@ -10,6 +10,8 @@
 
 #include "raylib.h"
 
+// todo implement type class checking with makros
+
 enum rlu_ui_type {NONE, ROOT, BUTTON, TEXTFIELD};
 enum rlu_hotkey_mods {RLU_HK_NONE = 0, RLU_HK_CTRL = 1, RLU_HK_SHIFT = 2, RLU_HK_ALT = 4};
 
@@ -25,29 +27,36 @@ typedef struct base_element {
     Rectangle click_size;
     Rectangle click_size_children_combined;
     bool enabled;
-    
+
     bool can_hide;
     bool hide;
 
     Texture2D ui_texture;
     Vector2 texture_position;
+} rlu_element;
 
-    //only if obj button
-    bool (*callback)(void*);
+typedef struct text_element {
+    rlu_element parent;
 
-    //if button: will be give into callback as argument
-    //if text field: contains text to be displayed in text field
-    void* user_data;
-
-    // only if obj text field
     bool writable;
+    char* text;
     size_t cursor_pos;
     size_t text_size;
+    int font_size;
+    int chars_until_line_break;
+    Color text_color;
+    int string_length_until_cursor;
+} rlu_text;
 
-    //todo font stuff
+typedef struct button_element {
+    rlu_element parent;
 
-    // only if obj container
-} rlu_element;
+    bool (*callback)(void*);
+    char* button_text;
+    int font_size;
+    void* user_data;
+    Color text_color;
+} rlu_button;
 
 typedef struct ui_hotkey {
     //? 1 Ctrl | 2 Shift | 4 Alt

@@ -205,6 +205,33 @@ void rlu_handle_frame_input(rlu_context* context) {
     }
 }
 
+
+// drawing text for different elements is required, the current defaults (until not expanded and redefined)
+// are the following: for text, anchor is the top left corner, for buttons, anchor is the center
+void rlu_draw_text(rlu_element* element, bool has_focus) {
+    if (element == NULL)
+        return;
+    if (element->type == TEXTFIELD) {
+        rlu_text *text_element = (rlu_text*) element;
+        DrawText(text_element->text,
+         (int) element->texture_position.x, (int) element->texture_position.y,
+         text_element->font_size, text_element->text_color);
+        // text_element->parent.ui_texture.width;
+        // text_element->parent.ui_texture.height;
+        if (text_element->writable && has_focus) {
+            // TODO get position of cursor and the needed text width DRAW CURSOR
+            // todo implement blinking
+            DrawRectangle((int) element->texture_position.x, (int) element->texture_position.y + text_element->string_length_until_cursor, 4, text_element->font_size, text_element->text_color);
+        }
+    } else if (element->type == BUTTON) {
+        rlu_button *button = (rlu_button*) element;
+        int text_width = MeasureText(button->button_text, button->font_size);
+        int text_pos_x = element->texture_position.x + element->ui_texture.height / 2 - button->font_size / 2;
+        int text_pos_y = element->texture_position.y + element->ui_texture.width / 2 - text_width / 2;
+        DrawText(button->button_text, text_pos_x, text_pos_y, button->font_size, button->text_color);
+    }
+}
+
 void rlu_draw_element(rlu_element* element) {
     //printf("[drawing texture] drawing texture with id: %i\n", element->id);
     DrawTexture(element->ui_texture, (int)element->texture_position.x, (int)element->texture_position.y, WHITE);
