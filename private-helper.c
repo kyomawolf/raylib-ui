@@ -84,7 +84,7 @@ int rlu_get_new_id() {
 
 
 // todo finish? already implemented?
-bool rlu_handle_scene_input(rlu_element* root) {
+/* bool rlu_handle_scene_input(rlu_element* root) {
     rlu_element* current = root;
     int id = root->id;
     while (current->child_count != 0) {
@@ -97,7 +97,7 @@ bool rlu_handle_scene_input(rlu_element* root) {
         }
     }
     return false;
-}
+} */
 
 static Rectangle rectangle_addition(Rectangle one, Rectangle two) {
     if (two.x < one.x) {

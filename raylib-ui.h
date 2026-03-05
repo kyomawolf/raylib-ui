@@ -101,7 +101,9 @@ typedef struct ui_state {
 /**
  * @return a new context needed for (almost) all raylib ui calls, caller is owner of the memory
  */
-rlu_context* rlu_create_new_context();
+// rlu_context* rlu_create_new_context();
+
+rlu_context* rlu_get_context();
 
 int rlu_add_scene(rlu_context* context);
 

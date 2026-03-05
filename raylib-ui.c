@@ -3,12 +3,23 @@
 #include <string.h>
 #include "private-helper.h"
 
+// TODO REMOVE ALL CONTEXT PARAMS
+static rlu_context* g_rlu_context = NULL;
+
 rlu_context* rlu_create_new_context() {
+
     rlu_context* new_context = calloc(1, sizeof(rlu_context));
     new_context->scenes = calloc(4, sizeof(rlu_scene));
     new_context->scene_reserve = 4;
     new_context->scene_count = 0;
     return new_context;
+}
+
+rlu_context* rlu_get_context() {
+    if (!g_rlu_context) {
+        g_rlu_context = rlu_create_new_context();
+    }
+    return g_rlu_context;
 }
 
 int rlu_add_scene(rlu_context* context) {
@@ -76,10 +87,10 @@ bool rlu_ui_add_callback(rlu_context* context, int scene_id, int target_id, bool
     }
     rlu_element *target_element = ru_search_for_element(&target_scene->root_element, target_id);
     
-    if (target_element->callback) {
+    if (target_element->type != BUTTON) {
         return false;
     }
-    target_element->callback = callback;
+    ((rlu_button*)target_element)->callback = callback;
     return true;
 }
 
@@ -235,6 +246,7 @@ void rlu_draw_text(rlu_element* element, bool has_focus) {
 void rlu_draw_element(rlu_element* element) {
     //printf("[drawing texture] drawing texture with id: %i\n", element->id);
     DrawTexture(element->ui_texture, (int)element->texture_position.x, (int)element->texture_position.y, WHITE);
+    rlu_draw_text(element, )
 }
 
 void rlu_render_scene(rlu_scene* scene) {
@@ -303,9 +315,19 @@ rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_i
      if (!new_element) {
         return 0;
     }
+    rlu_text *new_text = (rlu_text *)new_element;
+    int text_length = strlen(text);
+    new_text->text_size = text_length + 1;
+    new_text->text = calloc(new_text->text_size, 1);
+    strncpy(new_text->text, text, text_length);
+    new_text->string_length_until_cursor = text_length;
+    new_text->font_size = 12;
 
-    new_element->user_data = calloc(strlen(text) + 1, 1);
-    strncpy(new_element->user_data, text, strlen(text));
+    // todo determine if 150 is better
+    
+    if (new_element->ui_texture.mipmaps *0.299 + green*0.587 + blue*0.114 > 186)
+        new_text->text_color = WHITE;
+    new_text->text_color = BLACK;
 
     return new_element;
 }
