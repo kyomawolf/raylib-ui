@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "private-helper.h"
 #include "raylib-ui.h"
+#include "private-helper.h"
 
 #define RAYLIB_UI_DEFAULT_CHILD_RESERVE 5
 
@@ -150,37 +150,37 @@ void rlu_rebuild_click_size(rlu_context* context, int scene_id) {
     }
 }
 
-void text_field_resize(rlu_element* text_field, size_t new_size) {
+void text_field_resize(rlu_text* text_field, size_t new_size) {
     char* replacement = calloc(new_size, 1);
-    memcpy(replacement, text_field->user_data, text_field->text_size);
-    free(text_field->user_data);
-    text_field->user_data = replacement;
+    memcpy(replacement, text_field->text, text_field->text_size);
+    free(text_field->text);
+    text_field->text = replacement;
     text_field->text_size = new_size;
 }
 
-void text_field_control_mod(rlu_element* text_field, int key, size_t str_size) {
+void text_field_control_mod(rlu_text* text_field, int key, size_t str_size) {
     if (key == KEY_V) {
         const char * clipboard = GetClipboardText();
         size_t clipboard_length = strlen(clipboard);
 
         if (clipboard_length > text_field->text_size - str_size - 1) {
             text_field_resize(text_field, str_size + strlen(clipboard) + 1);
-            memmove(text_field->user_data + text_field->cursor_pos + clipboard_length, text_field->user_data + text_field->cursor_pos, strlen(text_field->user_data + text_field->cursor_pos));
-            memcpy(text_field->user_data + text_field->cursor_pos, clipboard, clipboard_length);
+            memmove(text_field->text + text_field->cursor_pos + clipboard_length, text_field->text + text_field->cursor_pos, strlen(text_field->text + text_field->cursor_pos));
+            memcpy(text_field->text + text_field->cursor_pos, clipboard, clipboard_length);
         }
     } if (key == KEY_C) {
-        SetClipboardText(text_field->user_data);
+        SetClipboardText(text_field->text);
     }
 }
 
-void text_field_edit(rlu_element* text_field, int (*all_pressed_keys)[MAX_PRESSED_KEYS_AT_ONCE]) {
-    size_t str_size = strlen(text_field->user_data);
+void text_field_edit(rlu_text* text_field, int (*all_pressed_keys)[MAX_PRESSED_KEYS_AT_ONCE]) {
+    size_t str_size = strlen(text_field->text);
 
     if (str_size + MAX_PRESSED_KEYS_AT_ONCE <= text_field->text_size) {
         text_field_resize(text_field, str_size + MAX_PRESSED_KEYS_AT_ONCE + 1);
     }
 
-    char* text = text_field->user_data;
+    char* text = text_field->text;
     bool control_flag = false;
 
     for (int i = 0; i < MAX_PRESSED_KEYS_AT_ONCE; i++) {

@@ -12,7 +12,7 @@ int main() {
     SetTargetFPS(60);
     rlu_context *ui_context;
 
-    ui_context = rlu_create_new_context();
+    ui_context = rlu_get_context();
     int main_scene = rlu_add_scene(ui_context);
 
     

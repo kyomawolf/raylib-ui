@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "private-helper.h"
 
@@ -98,11 +97,14 @@ bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vecto
     rlu_element* current = root;
     if (root == NULL)
         return false;
-    if (CheckCollisionPointRec(position, root->click_size)) {
-            context->current_focus = current;
-            if (current->children[i].callback != NULL)
-                return current->callback(current->user_data);
+    if (CheckCollisionPointRec(position, current->click_size)) {
+        context->current_focus = current;
+        if (current->type == BUTTON && ((rlu_button *) current)->callback != NULL) {
+            rlu_button *button = (rlu_button *) current;
+            return button->callback(button->user_data);
+        }
     }
+
     rlu_element* entrance = current;
     do {
         for (int i = 0; i < current->child_count; i++) {
@@ -111,8 +113,10 @@ bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vecto
                 break;
             } else if (CheckCollisionPointRec(position, current->children[i].click_size)) {
                 context->current_focus = &current->children[i];
-                if (current->children[i].callback != NULL)
-                    return current->children[i].callback(current->children[i].user_data);
+                if (current->children[i].type == BUTTON && ((rlu_button*) &current->children[i])->callback != NULL) {
+                    rlu_button *button = (rlu_button *) &current->children[i];
+                    return button->callback(button->user_data);
+                }
             }
         }
     } while (current != NULL && entrance != current);
@@ -198,8 +202,8 @@ void rlu_handle_key_input(rlu_context* context, int first_pressed) {
     //todo check for focus and writable (text) field
     if (context->current_focus != NULL
         && context->current_focus->type == TEXTFIELD
-        && context->current_focus->writable) {
-            text_field_edit(context->current_focus, &all_pressed_keys);
+        && ((rlu_text*) context->current_focus)->writable) {
+            text_field_edit((rlu_text*)context->current_focus, &all_pressed_keys);
     }
 }
 
@@ -246,7 +250,7 @@ void rlu_draw_text(rlu_element* element, bool has_focus) {
 void rlu_draw_element(rlu_element* element) {
     //printf("[drawing texture] drawing texture with id: %i\n", element->id);
     DrawTexture(element->ui_texture, (int)element->texture_position.x, (int)element->texture_position.y, WHITE);
-    rlu_draw_text(element, )
+    // rlu_draw_text(element, )
 }
 
 void rlu_render_scene(rlu_scene* scene) {
@@ -302,8 +306,8 @@ rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_
     if (!new_element) {
         return 0;
     }
-
-    new_element->callback = callback;
+    rlu_button *new_button = (rlu_button*) new_element;
+    new_button->callback = callback;
 
     return new_element;
 }
@@ -322,11 +326,6 @@ rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_i
     strncpy(new_text->text, text, text_length);
     new_text->string_length_until_cursor = text_length;
     new_text->font_size = 12;
-
-    // todo determine if 150 is better
-    
-    if (new_element->ui_texture.mipmaps *0.299 + green*0.587 + blue*0.114 > 186)
-        new_text->text_color = WHITE;
     new_text->text_color = BLACK;
 
     return new_element;

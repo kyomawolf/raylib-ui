@@ -1,14 +1,15 @@
 #ifndef RAYLIB_UI_H
 #define RAYLIB_UI_H
 
+#include "raylib.h"
+
 #if RAYLIB_VERSION_MAJOR < 5
 # error "WRONG RAYLIB MAYOR VERSION"
 #elif RAYLIB_VERSION_MINOR < 5
 # error "WRONG RAYLIB MINOR VERSION"
 #endif
 
-
-#include "raylib.h"
+#include <stdlib.h>
 
 // todo implement type class checking with makros
 
