@@ -25,9 +25,9 @@ int main() {
     
     position.x = 400;
     position.y = 600;
-    Image text_image = GenImageColor(100, 100, WHITE);
-    Texture2D text_texture = LoadTextureFromImage(text_image);
-    rlu_element* text_field = rlu_add_text_field(ui_context, 0, main_scene, position, text_texture, "Hello there!");
+    // Image text_image = GenImageColor(100, 100, WHITE);
+    // Texture2D text_texture = LoadTextureFromImage(text_image);
+    // rlu_element* text_field = rlu_add_text_field(ui_context, 0, main_scene, position, text_texture, "Hello there!");
     test_button->hide = false;
 
     while (!WindowShouldClose()) {

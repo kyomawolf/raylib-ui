@@ -6,14 +6,27 @@
 
 #define RAYLIB_UI_DEFAULT_CHILD_RESERVE 5
 
-rlu_element* ru_add_ui_element_children(rlu_element* parent) {
+rlu_element *rlu_create_new_element_type(enum rlu_ui_type type) {
+    switch (type) {
+        case BUTTON:
+            return calloc(1, sizeof(rlu_button));
+        case TEXTFIELD:
+            return calloc(1, sizeof(rlu_text));
+        default:
+            printf("ERROR: BAD TYPE, NOT IMPLEMENTED");
+            return NULL;
+    }
+}
+
+rlu_element* ru_add_ui_element_children(rlu_element* parent, enum rlu_ui_type type) {
     int add_count = 1;
     if (parent->children == NULL && parent->type != ROOT) {
         add_count = RAYLIB_UI_DEFAULT_CHILD_RESERVE;
     }
     if (parent->child_reserve <= parent->child_count) {
         rlu_element* old_elements = parent->children;
-        parent->children = calloc(add_count + parent->child_reserve, sizeof(rlu_element));
+        parent->children = rlu_create_new_element_type(type);
+        parent->children = calloc(add_count + parent->child_reserve, sizeof(rlu_element)); // TODO FIX THIS
         memmove(parent->children, old_elements, parent->child_count * sizeof(rlu_element));
         parent->child_reserve += add_count;
         free(old_elements);
@@ -214,7 +227,7 @@ void text_field_edit(rlu_text* text_field, int (*all_pressed_keys)[MAX_PRESSED_K
             if (text_field->cursor_pos != 0) {
                 text_field->cursor_pos--;
             }
-        } else if ((*all_pressed_keys)[i] == KEY_UP) { // TODO improve mutline editing
+        } else if ((*all_pressed_keys)[i] == KEY_UP) { // TODO improve multiline editing
             text_field->cursor_pos = 0;
         } else if ((*all_pressed_keys)[i] == KEY_DOWN) {
             text_field->cursor_pos = str_size;

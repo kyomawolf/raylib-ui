@@ -7,7 +7,7 @@
 // noone will press more than 10 keys at once...
 #define MAX_PRESSED_KEYS_AT_ONCE 10
 
-rlu_element* ru_add_ui_element_children(rlu_element* parent);
+rlu_element* ru_add_ui_element_children(rlu_element* parent, enum rlu_ui_type type);
 rlu_element* ru_search_for_element(rlu_element* root, int id);
 rlu_scene* ru_search_for_scene(rlu_context* context, int scene_id);
 

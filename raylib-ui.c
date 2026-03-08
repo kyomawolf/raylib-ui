@@ -45,7 +45,7 @@ rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene
     for (int it = 0; context->scene_count > it && context->scenes != NULL; it++) {
         if (context->scenes[it].id == scene_id) {
             if (parent_id == 0) {
-                new_element = ru_add_ui_element_children(&context->scenes[it].root_element);
+                new_element = ru_add_ui_element_children(&context->scenes[it].root_element, type);
                 if (new_element)
                     element_id = new_element->id;
                 break;
@@ -54,7 +54,7 @@ rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene
                 if (!parent) {
                     return 0;
                 }
-                new_element = ru_add_ui_element_children(parent);
+                new_element = ru_add_ui_element_children(parent, type);
                 if (new_element)
                     element_id = new_element->id;
                 break;
