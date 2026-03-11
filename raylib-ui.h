@@ -11,14 +11,12 @@
 
 #include <stdlib.h>
 
-// todo implement type class checking with makros
-
 enum rlu_ui_type {NONE, ROOT, BUTTON, TEXTFIELD};
 enum rlu_hotkey_mods {RLU_HK_NONE = 0, RLU_HK_CTRL = 1, RLU_HK_SHIFT = 2, RLU_HK_ALT = 4};
 
 typedef struct base_element {
     struct base_element* parent;
-    struct base_element* children;
+    struct base_element** children;
     int child_count;
     int child_reserve;
     int id;

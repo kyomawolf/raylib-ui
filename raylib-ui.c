@@ -108,12 +108,12 @@ bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vecto
     rlu_element* entrance = current;
     do {
         for (int i = 0; i < current->child_count; i++) {
-            if (CheckCollisionPointRec(position, current->children[i].click_size_children_combined)) {
+            if (CheckCollisionPointRec(position, current->children[i]->click_size_children_combined)) {
                 current = &current->children[i];
                 break;
-            } else if (CheckCollisionPointRec(position, current->children[i].click_size)) {
+            } else if (CheckCollisionPointRec(position, current->children[i]->click_size)) {
                 context->current_focus = &current->children[i];
-                if (current->children[i].type == BUTTON && ((rlu_button*) &current->children[i])->callback != NULL) {
+                if (current->children[i]->type == BUTTON && ((rlu_button*) &current->children[i])->callback != NULL) {
                     rlu_button *button = (rlu_button *) &current->children[i];
                     return button->callback(button->user_data);
                 }
@@ -272,14 +272,14 @@ void rlu_render_scene(rlu_scene* scene) {
             && !current->hide) {
             current = &current->children[0];
         } else if (current->parent) {
-            rlu_element* siblings = current->parent->children;
+            rlu_element** siblings = current->parent->children;
             rlu_element* next_sibling = NULL;
             bool next = false;
             for (int i = 0; i < current->parent->child_count; i++) {
                 if (next) {
-                    next_sibling = &(siblings[i]);
+                    next_sibling = siblings[i];
                 }
-                if (current->id == siblings[i].id) {
+                if (current->id == siblings[i]->id) {
                     next = true;
                 }
             }

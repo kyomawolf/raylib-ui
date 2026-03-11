@@ -20,18 +20,18 @@ rlu_element *rlu_create_new_element_type(enum rlu_ui_type type) {
 
 rlu_element* ru_add_ui_element_children(rlu_element* parent, enum rlu_ui_type type) {
     int add_count = 1;
-    if (parent->children == NULL && parent->type != ROOT) {
+    if (parent->children == NULL) {
         add_count = RAYLIB_UI_DEFAULT_CHILD_RESERVE;
     }
     if (parent->child_reserve <= parent->child_count) {
         rlu_element* old_elements = parent->children;
-        parent->children = rlu_create_new_element_type(type);
-        parent->children = calloc(add_count + parent->child_reserve, sizeof(rlu_element)); // TODO FIX THIS
-        memmove(parent->children, old_elements, parent->child_count * sizeof(rlu_element));
+        parent->children = calloc(add_count + parent->child_reserve, sizeof(rlu_element*));
+        memmove(parent->children, old_elements, parent->child_count * sizeof(rlu_element*));
         parent->child_reserve += add_count;
         free(old_elements);
     }
-    rlu_element* new_element = &parent->children[parent->child_count];
+    rlu_element* new_element = rlu_create_new_element_type(type);
+    parent->children[parent->child_count] = new_element;
     parent->child_count++;
     new_element->id = rlu_get_new_id();
     new_element->parent = parent;
