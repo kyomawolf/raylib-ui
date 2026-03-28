@@ -113,8 +113,8 @@ bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vecto
                 break;
             } else if (CheckCollisionPointRec(position, current->children[i]->click_size)) {
                 context->current_focus = current->children[i];
-                if (current->children[i]->type == BUTTON && ((rlu_button*) &current->children[i])->callback != NULL) {
-                    rlu_button *button = (rlu_button *) &current->children[i];
+                if (current->children[i]->type == BUTTON && ((rlu_button*) current->children[i])->callback != NULL) {
+                    rlu_button *button = (rlu_button *) current->children[i];
                     return button->callback(button->user_data);
                 }
             }
@@ -309,6 +309,7 @@ rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_
     }
     rlu_button *new_button = (rlu_button*) new_element;
     new_button->callback = callback;
+    rlu_rebuild_click_size(context, scene_id);
 
     return new_element;
 }
