@@ -109,10 +109,10 @@ bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vecto
     do {
         for (int i = 0; i < current->child_count; i++) {
             if (CheckCollisionPointRec(position, current->children[i]->click_size_children_combined)) {
-                current = &current->children[i];
+                current = current->children[i];
                 break;
             } else if (CheckCollisionPointRec(position, current->children[i]->click_size)) {
-                context->current_focus = &current->children[i];
+                context->current_focus = current->children[i];
                 if (current->children[i]->type == BUTTON && ((rlu_button*) &current->children[i])->callback != NULL) {
                     rlu_button *button = (rlu_button *) &current->children[i];
                     return button->callback(button->user_data);
@@ -250,7 +250,8 @@ void rlu_draw_text(rlu_element* element, bool has_focus) {
 void rlu_draw_element(rlu_element* element) {
     //printf("[drawing texture] drawing texture with id: %i\n", element->id);
     DrawTexture(element->ui_texture, (int)element->texture_position.x, (int)element->texture_position.y, WHITE);
-    // rlu_draw_text(element, )
+    // todo focus handling?
+    rlu_draw_text(element, false);
 }
 
 void rlu_render_scene(rlu_scene* scene) {
@@ -270,7 +271,7 @@ void rlu_render_scene(rlu_scene* scene) {
         // select next element to be drawn
         if (current->child_count > 0 && current->children != NULL
             && !current->hide) {
-            current = &current->children[0];
+            current = current->children[0];
         } else if (current->parent) {
             rlu_element** siblings = current->parent->children;
             rlu_element* next_sibling = NULL;
@@ -325,7 +326,7 @@ rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_i
     new_text->text = calloc(new_text->text_size, 1);
     strncpy(new_text->text, text, text_length);
     new_text->string_length_until_cursor = text_length;
-    new_text->font_size = 12;
+    new_text->font_size = 14;
     new_text->text_color = BLACK;
 
     return new_element;

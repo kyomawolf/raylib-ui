@@ -24,13 +24,17 @@ rlu_element* ru_add_ui_element_children(rlu_element* parent, enum rlu_ui_type ty
         add_count = RAYLIB_UI_DEFAULT_CHILD_RESERVE;
     }
     if (parent->child_reserve <= parent->child_count) {
-        rlu_element* old_elements = parent->children;
-        parent->children = calloc(add_count + parent->child_reserve, sizeof(rlu_element*));
+        rlu_element** old_elements = parent->children;
+        parent->children = calloc(add_count + parent->child_reserve, sizeof(rlu_element*)); // TODO FIX THIS
         memmove(parent->children, old_elements, parent->child_count * sizeof(rlu_element*));
         parent->child_reserve += add_count;
         free(old_elements);
     }
     rlu_element* new_element = rlu_create_new_element_type(type);
+    if (new_element == NULL) {
+        TraceLog(LOG_ERROR, "Cannot allocate new element.");
+        return NULL;
+    }
     parent->children[parent->child_count] = new_element;
     parent->child_count++;
     new_element->id = rlu_get_new_id();
@@ -58,19 +62,19 @@ rlu_element* ru_search_for_element(rlu_element* root, int id) {
             return current;
         if (current->child_count > 0 && current->children != NULL) {
             for (int i = 0; i < current->child_count; i++) {
-                if (current->children[i].id == id)
-                    return &current->children[i];
+                if (current->children[i]->id == id)
+                    return current->children[i];
             }
-            current = &current->children[0];
+            current = current->children[0];
         }else if (current->parent) {
-            rlu_element* siblings = current->parent->children;
+            rlu_element** siblings = current->parent->children;
             rlu_element* next_sibling = NULL;
             bool next = false;
             for (int i = 0; i < current->parent->child_count; i++) {
                 if (next) {
-                    next_sibling = &(siblings[i]);
+                    next_sibling = siblings[i];
                 }
-                if (current->id == siblings[i].id) {
+                if (current->id == siblings[i]->id) {
                     next = true;
                 }
             }
@@ -142,7 +146,7 @@ static Rectangle rebuild_combined_clicksize(rlu_element* element) {
         return element->click_size;
     } else {
         for (int i = 0; i < element->child_count; i++) {
-            Rectangle addition = rebuild_combined_clicksize(&element->children[i]);
+            Rectangle addition = rebuild_combined_clicksize(element->children[i]);
             combined_rectangle = rectangle_addition(combined_rectangle, addition);
         }
     }
