@@ -6,3 +6,6 @@
 This library uses [raysan5's](https://github.com/raysan5) [raylib](https://github.com/raysan5/raylib) as basis. I.e.: (in the future) all logging is done with the builtin TraceLog.
 
 This library uses raylibs graphic framework.
+
+### Usage
+See `example.c` for an usage guide.

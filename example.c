@@ -13,9 +13,11 @@ int main() {
     rlu_context *ui_context;
 
     ui_context = rlu_get_context();
+
+    // you may have different scenes, that are activated or disabled depending on their function
     int main_scene = rlu_add_scene(ui_context);
 
-    
+    // use custom textures for your ui elements. their boundaries are also used for the click area
     Image button_image = GenImageColor(100, 50, RED);
     Texture2D button_texture = LoadTextureFromImage(button_image);
     Vector2 position = {400, 400};
@@ -31,9 +33,13 @@ int main() {
     test_button->hide = false;
 
     while (!WindowShouldClose()) {
+        // this call is needed in your main program loop to detect clicks
+        // and other input related functionalities
         rlu_handle_frame_input(ui_context);
+        
         BeginDrawing();
         ClearBackground(GRAY);
+        // put this call only after the BeginDrawing call, it will render your UI elements
         rlu_render(ui_context);
         EndDrawing();
     }
