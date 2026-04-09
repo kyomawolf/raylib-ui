@@ -2,7 +2,6 @@
 #include <string.h>
 #include "private-helper.h"
 
-// TODO REMOVE ALL CONTEXT PARAMS
 static rlu_context* g_rlu_context = NULL;
 
 rlu_context* rlu_create_new_context() {
@@ -21,36 +20,36 @@ rlu_context* rlu_get_context() {
     return g_rlu_context;
 }
 
-int rlu_add_scene(rlu_context* context) {
-    if (context->scene_reserve <= context->scene_count) {
-        rlu_scene *old_scenes = context->scenes;
-        context->scenes = calloc(context->scene_count * 2, sizeof(rlu_scene));
-        context->scene_reserve *= 2;
+int rlu_add_scene() {
+    if (g_rlu_context->scene_reserve <= g_rlu_context->scene_count) {
+        rlu_scene *old_scenes = g_rlu_context->scenes;
+        g_rlu_context->scenes = calloc(g_rlu_context->scene_count * 2, sizeof(rlu_scene));
+        g_rlu_context->scene_reserve *= 2;
 
-        memmove(context->scenes, old_scenes, context->scene_count * sizeof(rlu_scene));
+        memmove(g_rlu_context->scenes, old_scenes, g_rlu_context->scene_count * sizeof(rlu_scene));
         free(old_scenes);
     }
-    context->scene_count++;
+    g_rlu_context->scene_count++;
     int new_id = rlu_get_new_id();
-    context->scenes[context->scene_count - 1].id = new_id;
-    context->scenes[context->scene_count - 1].root_element.type = ROOT;
-    context->scenes[context->scene_count - 1].enabled = true;
+    g_rlu_context->scenes[g_rlu_context->scene_count - 1].id = new_id;
+    g_rlu_context->scenes[g_rlu_context->scene_count - 1].root_element.type = ROOT;
+    g_rlu_context->scenes[g_rlu_context->scene_count - 1].enabled = true;
     return new_id;
 }
 
 // todo rename
-rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene_id, Vector2 position, Texture2D ui_texture, enum rlu_ui_type type) {
+rlu_element* rlu_add_element_base(int parent_id, int scene_id, Vector2 position, Texture2D ui_texture, enum rlu_ui_type type) {
     rlu_element* new_element = NULL;
     int element_id = 0;
-    for (int it = 0; context->scene_count > it && context->scenes != NULL; it++) {
-        if (context->scenes[it].id == scene_id) {
+    for (int it = 0; g_rlu_context->scene_count > it && g_rlu_context->scenes != NULL; it++) {
+        if (g_rlu_context->scenes[it].id == scene_id) {
             if (parent_id == 0) {
-                new_element = ru_add_ui_element_children(&context->scenes[it].root_element, type);
+                new_element = ru_add_ui_element_children(&g_rlu_context->scenes[it].root_element, type);
                 if (new_element)
                     element_id = new_element->id;
                 break;
             } else {
-                rlu_element* parent = ru_search_for_element(&context->scenes[it].root_element, parent_id);
+                rlu_element* parent = ru_search_for_element(&g_rlu_context->scenes[it].root_element, parent_id);
                 if (!parent) {
                     return 0;
                 }
@@ -79,8 +78,8 @@ rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene
     return new_element;
 }
 
-bool rlu_ui_add_callback(rlu_context* context, int scene_id, int target_id, bool(*callback)(void*)) {
-    rlu_scene* target_scene = ru_search_for_scene(context, scene_id);
+bool rlu_ui_add_callback(int scene_id, int target_id, bool(*callback)(void*)) {
+    rlu_scene* target_scene = ru_search_for_scene(g_rlu_context, scene_id);
     if (!target_scene) {
         return false;
     }
@@ -93,12 +92,12 @@ bool rlu_ui_add_callback(rlu_context* context, int scene_id, int target_id, bool
     return true;
 }
 
-bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vector2 position) {
+bool rlu_trigger_ui_element_click(rlu_element* root, Vector2 position) {
     rlu_element* current = root;
     if (root == NULL)
         return false;
     if (CheckCollisionPointRec(position, current->click_size)) {
-        context->current_focus = current;
+        g_rlu_context->current_focus = current;
         if (current->type == BUTTON && ((rlu_button *) current)->callback != NULL) {
             rlu_button *button = (rlu_button *) current;
             return button->callback(button->user_data);
@@ -112,7 +111,7 @@ bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vecto
                 current = current->children[i];
                 break;
             } else if (CheckCollisionPointRec(position, current->children[i]->click_size)) {
-                context->current_focus = current->children[i];
+                g_rlu_context->current_focus = current->children[i];
                 if (current->children[i]->type == BUTTON && ((rlu_button*) current->children[i])->callback != NULL) {
                     rlu_button *button = (rlu_button *) current->children[i];
                     return button->callback(button->user_data);
@@ -123,14 +122,14 @@ bool rlu_trigger_ui_element_click(rlu_context* context, rlu_element* root, Vecto
     return false;
 }
 
-void rlu_handle_mouse_input(rlu_context* context) {
+void rlu_handle_mouse_input() {
     Vector2 mouse_position = GetMousePosition();
     printf("mouse button pressed at: %f %f\n", mouse_position.x, mouse_position.y);
-    for (int i = 0; i < context->scene_count; i++) {
-        if (context->scenes[i].enabled) {
-            printf("ui scene click size: x%f y%f w%f h%f\n", context->scenes[i].ui_click_size.x, context->scenes[i].ui_click_size.y, context->scenes[i].ui_click_size.width, context->scenes[i].ui_click_size.height);
-            if (CheckCollisionPointRec(mouse_position, context->scenes[i].ui_click_size)) {
-                if (rlu_trigger_ui_element_click(context, &context->scenes[i].root_element, mouse_position)) {
+    for (int i = 0; i < g_rlu_context->scene_count; i++) {
+        if (g_rlu_context->scenes[i].enabled) {
+            printf("ui scene click size: x%f y%f w%f h%f\n", g_rlu_context->scenes[i].ui_click_size.x, g_rlu_context->scenes[i].ui_click_size.y, g_rlu_context->scenes[i].ui_click_size.width, g_rlu_context->scenes[i].ui_click_size.height);
+            if (CheckCollisionPointRec(mouse_position, g_rlu_context->scenes[i].ui_click_size)) {
+                if (rlu_trigger_ui_element_click(&g_rlu_context->scenes[i].root_element, mouse_position)) {
                     break;
                 }
             }
@@ -154,7 +153,7 @@ bool rlu_handle_key_input_is_hotkey(int* pressed_keys, rlu_hotkey* hotkey) {
     return true;
 }
 
-void rlu_handle_key_input(rlu_context* context, int first_pressed) {
+void rlu_handle_key_input(int first_pressed) {
     int pressed_keys[MAX_PRESSED_KEYS_AT_ONCE];
     int all_pressed_keys[MAX_PRESSED_KEYS_AT_ONCE];
     int modifier = RLU_HK_NONE;
@@ -187,8 +186,8 @@ void rlu_handle_key_input(rlu_context* context, int first_pressed) {
 
     // TODO add special mode for setting hotkeys
     //check for hotkeys
-    for (int hk_counter = 0; hk_counter < context->hotkey_count; hk_counter++) {
-        rlu_hotkey hotkey = context->hotkey_list[hk_counter];
+    for (int hk_counter = 0; hk_counter < g_rlu_context->hotkey_count; hk_counter++) {
+        rlu_hotkey hotkey = g_rlu_context->hotkey_list[hk_counter];
         if (hotkey.modifier != modifier && pressed_non_mod_keys != hotkey.key_count) {
             continue;
         }
@@ -200,23 +199,23 @@ void rlu_handle_key_input(rlu_context* context, int first_pressed) {
     }
 
     //todo check for focus and writable (text) field
-    if (context->current_focus != NULL
-        && context->current_focus->type == TEXTFIELD
-        && ((rlu_text*) context->current_focus)->writable) {
-            text_field_edit((rlu_text*)context->current_focus, &all_pressed_keys);
+    if (g_rlu_context->current_focus != NULL
+        && g_rlu_context->current_focus->type == TEXTFIELD
+        && ((rlu_text*) g_rlu_context->current_focus)->writable) {
+            text_field_edit((rlu_text*)g_rlu_context->current_focus, &all_pressed_keys);
     }
 }
 
-void rlu_handle_frame_input(rlu_context* context) {
+void rlu_handle_frame_input() {
     bool mouse_pressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     int pressedKey = GetKeyPressed();
 
     //todo hovermode
     if (mouse_pressed) {
-        rlu_handle_mouse_input(context);
+        rlu_handle_mouse_input();
     }
     if (pressedKey == KEY_NULL) {
-        rlu_handle_key_input(context, pressedKey);
+        rlu_handle_key_input(pressedKey);
     }
 }
 
@@ -292,31 +291,30 @@ void rlu_render_scene(rlu_scene* scene) {
 }
 
 
-void rlu_render(rlu_context* context) {
-
+void rlu_render() {
     // render the last scene first, as it is in the back
-    for (int i = context->scene_count - 1; i >=0; i--) {
-        rlu_render_scene(&context->scenes[i]);
+    for (int i = g_rlu_context->scene_count - 1; i >=0; i--) {
+        rlu_render_scene(&g_rlu_context->scenes[i]);
     }
 
 }
 
-rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_id, 
+rlu_element* rlu_add_button_full(int parent_id, int scene_id, 
                          Vector2 position, Texture2D ui_texture, bool (*callback)(void*)) {
-    rlu_element* new_element = rlu_add_element_base(context, parent_id, scene_id, position, ui_texture, BUTTON);
+    rlu_element* new_element = rlu_add_element_base(parent_id, scene_id, position, ui_texture, BUTTON);
     if (!new_element) {
         return 0;
     }
     rlu_button *new_button = (rlu_button*) new_element;
     new_button->callback = callback;
-    rlu_rebuild_click_size(context, scene_id);
+    rlu_rebuild_click_size(g_rlu_context, scene_id);
 
     return new_element;
 }
 
-rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_id, 
+rlu_element* rlu_add_text_field(int parent_id, int scene_id, 
                                 Vector2 position, Texture2D ui_texture, const char *text) {
-    rlu_element* new_element = rlu_add_element_base(context, parent_id, scene_id, position, ui_texture, TEXTFIELD);
+    rlu_element* new_element = rlu_add_element_base(parent_id, scene_id, position, ui_texture, TEXTFIELD);
 
      if (!new_element) {
         return 0;
@@ -333,7 +331,7 @@ rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_i
     return new_element;
 }
 
-// todo create text field
+// todo create hotkey handling
 // todo create container
 // todo create layering for faster rendering speed - and with it a static ui state
 // todo create tests

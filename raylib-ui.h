@@ -104,28 +104,28 @@ typedef struct ui_state {
 
 rlu_context* rlu_get_context();
 
-int rlu_add_scene(rlu_context* context);
+int rlu_add_scene();
 
 
 /**
  * @return false if a callback has already been configured, true if it has been successfully set
  */
-bool rlu_ui_add_callback(rlu_context* context, int scene_id, int target_id, bool(*callback)(void*) );
+bool rlu_ui_add_callback(int scene_id, int target_id, bool(*callback)(void*) );
 
 /**
  * handles input for the scene, calls callbacks
  */
-void rlu_handle_frame_input(rlu_context* context);
+void rlu_handle_frame_input();
 
 /**
  * renders all non hidden ui elements with a texture available
  */
-void rlu_render(rlu_context* context);
+void rlu_render();
 
 /**
  * @return 0 if no button could be added
  */
-rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene_id, 
+rlu_element* rlu_add_element_base(int parent_id, int scene_id, 
                          Vector2 position, Texture2D ui_texture, enum rlu_ui_type type);
 
 /**
@@ -139,11 +139,11 @@ rlu_element* rlu_add_element_base(rlu_context* context, int parent_id, int scene
  * return true, when input was handled, and false if not. default should be true
  * @return gives you back the buttons pointer
  */
-rlu_element* rlu_add_button_full(rlu_context* context, int parent_id, int scene_id, 
+rlu_element* rlu_add_button_full(int parent_id, int scene_id, 
                          Vector2 position, Texture2D ui_texture, bool (*callback)(void*));
 
 
-rlu_element* rlu_add_text_field(rlu_context* context, int parent_id, int scene_id, 
+rlu_element* rlu_add_text_field(int parent_id, int scene_id, 
                                 Vector2 position, Texture2D ui_texture, const char* text);
 
 
