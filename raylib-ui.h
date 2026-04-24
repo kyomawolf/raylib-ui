@@ -10,6 +10,7 @@
 #endif
 
 #include <stdlib.h>
+#include <time.h>
 
 enum rlu_ui_type {NONE, ROOT, BUTTON, TEXTFIELD};
 enum rlu_hotkey_mods {RLU_HK_NONE = 0, RLU_HK_CTRL = 1, RLU_HK_SHIFT = 2, RLU_HK_ALT = 4};
@@ -31,6 +32,7 @@ typedef struct base_element {
     bool hide;
 
     Texture2D ui_texture;
+    Image ui_image;
     Vector2 texture_position;
 } rlu_element;
 
@@ -87,6 +89,9 @@ typedef struct ui_state {
     int scene_count;
     int scene_reserve;
 
+    struct timespec last_click;
+    
+
     rlu_hotkey* hotkey_list;
     int hotkey_count;
 
@@ -126,25 +131,25 @@ void rlu_render();
  * @return 0 if no button could be added
  */
 rlu_element* rlu_add_element_base(int parent_id, int scene_id, 
-                         Vector2 position, Texture2D ui_texture, enum rlu_ui_type type);
+                         Vector2 position, Image ui_texture, enum rlu_ui_type type);
 
 /**
  * @param context the programs global raylib-ui context
  * @param parent_id the parent of the new button
  * @param scene_id the scene where to find the parent
  * @param position the position relative to the parents position
- * @param ui_texture the default texture to be rendered in the render loop
+ * @param ui_image the default image to be rendered in the render loop
  * @param callback the logical callback to be used when clicked.
  * you can set user data in the button for the function to be used.
  * return true, when input was handled, and false if not. default should be true
  * @return gives you back the buttons pointer
  */
 rlu_element* rlu_add_button_full(int parent_id, int scene_id, 
-                         Vector2 position, Texture2D ui_texture, bool (*callback)(void*));
+                         Vector2 position, Image ui_image, bool (*callback)(void*));
 
 
 rlu_element* rlu_add_text_field(int parent_id, int scene_id, 
-                                Vector2 position, Texture2D ui_texture, const char* text);
+                                Vector2 position, Image ui_image, const char* text);
 
 
 

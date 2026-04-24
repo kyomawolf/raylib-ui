@@ -133,7 +133,7 @@ static Rectangle rectangle_addition(Rectangle one, Rectangle two) {
         one.width +=  width_combined_two - width_combined_one;
     }
     if (height_combined_two > height_combined_one) {
-        one.height = height_combined_two - height_combined_one;
+        one.height += height_combined_two - height_combined_one;
     }
     return one;
 }
@@ -152,6 +152,10 @@ static Rectangle rebuild_combined_clicksize(rlu_element* element) {
     }
     element->click_size_children_combined = combined_rectangle;
     // for parent add it's own clicksize
+    if (element->click_size.x == 0 && element->click_size.y == 0
+        && element->click_size.height == 0 && element->click_size.width == 0 ) {
+            return combined_rectangle;
+        }
     return rectangle_addition(combined_rectangle, element->click_size);
 }
 

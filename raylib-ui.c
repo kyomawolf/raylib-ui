@@ -1,8 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 #include "private-helper.h"
+#include <time.h>
+
+#include <unistd.h>
+#include <sys/types.h>
+
 
 static rlu_context* g_rlu_context = NULL;
+
+// times in nanoseconds
+#define rlu_milliseconds_mouse_debounce 50000000
+#define rlu_seconds_in_nano 1000000000
 
 rlu_context* rlu_create_new_context() {
 
@@ -10,6 +19,7 @@ rlu_context* rlu_create_new_context() {
     new_context->scenes = calloc(4, sizeof(rlu_scene));
     new_context->scene_reserve = 4;
     new_context->scene_count = 0;
+    clock_gettime(CLOCK_MONOTONIC, &new_context->last_click);
     return new_context;
 }
 
@@ -33,12 +43,14 @@ int rlu_add_scene() {
     int new_id = rlu_get_new_id();
     g_rlu_context->scenes[g_rlu_context->scene_count - 1].id = new_id;
     g_rlu_context->scenes[g_rlu_context->scene_count - 1].root_element.type = ROOT;
+    g_rlu_context->scenes[g_rlu_context->scene_count - 1].root_element.enabled = true;
+    g_rlu_context->scenes[g_rlu_context->scene_count - 1].root_element.hide = false;
     g_rlu_context->scenes[g_rlu_context->scene_count - 1].enabled = true;
     return new_id;
 }
 
 // todo rename
-rlu_element* rlu_add_element_base(int parent_id, int scene_id, Vector2 position, Texture2D ui_texture, enum rlu_ui_type type) {
+rlu_element* rlu_add_element_base(int parent_id, int scene_id, Vector2 position, Image ui_image, enum rlu_ui_type type) {
     rlu_element* new_element = NULL;
     int element_id = 0;
     for (int it = 0; g_rlu_context->scene_count > it && g_rlu_context->scenes != NULL; it++) {
@@ -66,11 +78,11 @@ rlu_element* rlu_add_element_base(int parent_id, int scene_id, Vector2 position,
     }
     
     new_element->type = type;
-    new_element->ui_texture = ui_texture;
+    new_element->ui_image = ui_image;
     new_element->click_size.x = position.x;
     new_element->click_size.y = position.y;
-    new_element->click_size.width = (float)ui_texture.width;
-    new_element->click_size.height = (float)ui_texture.height;
+    new_element->click_size.width = (float)ui_image.width;
+    new_element->click_size.height = (float)ui_image.height;
     new_element->texture_position.x = position.x;
     new_element->texture_position.y = position.y;
     new_element->enabled = true;
@@ -206,12 +218,29 @@ void rlu_handle_key_input(int first_pressed) {
     }
 }
 
+/* checks if first plus difference (in nanoseconds) is bigger than second*/
+bool rlu_second_bigger(struct timespec* first, struct timespec *second, long difference) {
+    //printf("first %ld, second %ld, nsecs %ld %ld\n", first->tv_sec + 2, second->tv_sec, first->tv_nsec, second->tv_nsec);
+    if (first->tv_sec + 2 < second->tv_sec) {
+        return true;
+    }
+    if (first->tv_sec == second->tv_sec) {
+        return first->tv_nsec + difference < second->tv_nsec;
+    } 
+    return first->tv_nsec + difference < rlu_seconds_in_nano + second->tv_nsec;
+}
+
 void rlu_handle_frame_input() {
-    bool mouse_pressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool mouse_pressed = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
+
     int pressedKey = GetKeyPressed();
+    struct timespec current_time;
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
 
     //todo hovermode
-    if (mouse_pressed) {
+    if (mouse_pressed
+        && rlu_second_bigger(&g_rlu_context->last_click, &current_time, rlu_milliseconds_mouse_debounce)) {
+        g_rlu_context->last_click = current_time;
         rlu_handle_mouse_input();
     }
     if (pressedKey == KEY_NULL) {
@@ -248,13 +277,18 @@ void rlu_draw_text(rlu_element* element, bool has_focus) {
 
 void rlu_draw_element(rlu_element* element) {
     //printf("[drawing texture] drawing texture with id: %i\n", element->id);
+    if (element->type == NONE || element->type == ROOT)
+        return;
+    if (!IsTextureValid(element->ui_texture)) {
+        element->ui_texture = LoadTextureFromImage(element->ui_image);
+    }
     DrawTexture(element->ui_texture, (int)element->texture_position.x, (int)element->texture_position.y, WHITE);
     // todo focus handling?
     rlu_draw_text(element, false);
 }
 
 void rlu_render_scene(rlu_scene* scene) {
-
+    static bool first = true;
     if (!scene->enabled) {
         return;
     }
@@ -264,6 +298,10 @@ void rlu_render_scene(rlu_scene* scene) {
     while (current != NULL) {
         
         if (!current->hide) {
+            if (first) {
+                printf("rendering element %f %f\n", current->texture_position.x, current->texture_position.y);
+            }
+            //DrawRectangleRec(current->click_size_children_combined, GRAY);
             rlu_draw_element(current);
         }
 
@@ -278,6 +316,7 @@ void rlu_render_scene(rlu_scene* scene) {
             for (int i = 0; i < current->parent->child_count; i++) {
                 if (next) {
                     next_sibling = siblings[i];
+                    break;
                 }
                 if (current->id == siblings[i]->id) {
                     next = true;
@@ -288,6 +327,7 @@ void rlu_render_scene(rlu_scene* scene) {
             current = NULL;
         }
     }
+    first = false;
 }
 
 
@@ -300,7 +340,7 @@ void rlu_render() {
 }
 
 rlu_element* rlu_add_button_full(int parent_id, int scene_id, 
-                         Vector2 position, Texture2D ui_texture, bool (*callback)(void*)) {
+                         Vector2 position, Image ui_texture, bool (*callback)(void*)) {
     rlu_element* new_element = rlu_add_element_base(parent_id, scene_id, position, ui_texture, BUTTON);
     if (!new_element) {
         return 0;
@@ -313,7 +353,7 @@ rlu_element* rlu_add_button_full(int parent_id, int scene_id,
 }
 
 rlu_element* rlu_add_text_field(int parent_id, int scene_id, 
-                                Vector2 position, Texture2D ui_texture, const char *text) {
+                                Vector2 position, Image ui_texture, const char *text) {
     rlu_element* new_element = rlu_add_element_base(parent_id, scene_id, position, ui_texture, TEXTFIELD);
 
      if (!new_element) {
@@ -333,5 +373,4 @@ rlu_element* rlu_add_text_field(int parent_id, int scene_id,
 
 // todo create hotkey handling
 // todo create container
-// todo create layering for faster rendering speed - and with it a static ui state
 // todo create tests
