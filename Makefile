@@ -2,7 +2,7 @@ NAME = raylib-ui
 
 LIBS =  -lraylib -lm
 FLAGS = -Wall -Wextra
-SANITIZE = -fPIC -fsanitize=address -fno-omit-frame-pointer -static-libasan
+SANITIZE = -fPIC -fno-omit-frame-pointer -static-libasan
 
 INC = -Iinclude -I. -Itests
 
@@ -22,19 +22,19 @@ EXAMPLE_OBJ = $(addprefix $(OBJ_DIR), $(patsubst %.c,%.o,$(EXAMPLE_SRC)))
 all: libs example test
 
 libs: $(OBJ)
-	gcc $(FLAGS) $(SANITIZE) -shared -g $(INC) $(filter %.o,$^) -o $(NAME).so $(LIBS)
+	gcc $(FLAGS) -shared -g $(INC) $(filter %.o,$^) -o $(NAME).so $(LIBS)
 	ar cr lib$(NAME).a $(filter %.o,$^)
 
 $(OBJ_DIR)%.o: %.c
-	gcc $(FLAGS) $(SANITIZE) $(INC) -g -c $< -o $@
+	gcc $(FLAGS) $(INC) -g -c $< -o $@
 
 example: libs $(EXAMPLE_OBJ)
-	gcc $(FLAGS) $(INC) $(SANITIZE) -g $(EXAMPLE_OBJ) -o $@ $(LIBS) -L. -lraylib-ui
+	gcc $(FLAGS) $(INC)-g $(EXAMPLE_OBJ) -o $@ $(LIBS) -L. -lraylib-ui
 
 re: clean all
 
 test: libs $(TEST_OBJ) $(OBJ)
-	gcc $(FLAGS) $(SANITIZE) -g $(INC) $(TEST_OBJ) $(OBJ) -o testrunner $(LIBS)
+	gcc $(FLAGS)  -g $(INC) $(TEST_OBJ) $(OBJ) -o testrunner $(LIBS)
 
 
 clean:
